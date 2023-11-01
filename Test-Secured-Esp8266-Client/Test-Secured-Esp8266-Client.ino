@@ -1,99 +1,124 @@
-/*
-	Secured Esp8266 Websockets Client
-
-	This sketch:
-        1. Connects to a WiFi network
-        2. Connects to a Websockets server (using WSS)
-        3. Sends the websockets server a message ("Hello Server")
-        4. Sends the websocket server a "ping"
-        5. Prints all incoming messages while the connection is open
-
-    NOTE:
-    The sketch dosen't check or indicate about errors while connecting to 
-    WiFi or to the websockets server. For full example you might want 
-    to try the example named "Esp8266-Client" (And use the ssl methods).
-
-	Hardware:
-        For this sketch you only need an ESP8266 board.
-
-	Created 15/02/2019
-	By Gil Maimon
-	https://github.com/gilmaimon/ArduinoWebsockets
-
-*/
+// Client code for AWS IoT Websockets
 
 #include <ArduinoWebsockets.h>
 #include <ESP8266WiFi.h>
-#include <Ticker.h>
+#include <ArduinoJson.h>
 
-Ticker pinPong;
+const char *ssid = "";     // Enter SSID
+const char *password = ""; // Enter Password
 
-const char* ssid = ""; //Enter SSID
-const char* password = ""; //Enter Password
 
-const char* websockets_connection_string = "wss://15yzzg78gk.execute-api.us-east-1.amazonaws.com/production/"; //Enter server adress
-
-// This latest SHA1 fingerprint was updated 15.04.2021
-const char echo_org_ssl_fingerprint[] PROGMEM   = "34 A2 66 08 A1 4D 1E 83 1A 0E 49 3C 4A 84 45 9E 4A 0D 08 FE";
+// Enter server adress
+const char *websockets_connection_string = "wss://15yzzg78gk.execute-api.us-east-1.amazonaws.com/development/";
 
 using namespace websockets;
 
-void onMessageCallback(WebsocketsMessage message) {
-    Serial.print("Got Message: ");
-    Serial.println(message.data());
+WebsocketsClient client;
+
+// Send data to server in JSON format
+void serializeTest()
+{
+    DynamicJsonDocument doc(1024);
+
+    doc["sensor"] = "gps";
+    doc["time"] = 1351824120;
+    doc["data"][0] = 48.756080;
+    doc["data"][1] = 2.302038;
+
+    char output[200];
+    serializeJson(doc, output);
+    Serial.println(output);
+    client.send(output);
 }
 
-void onEventsCallback(WebsocketsEvent event, String data) {
-    if(event == WebsocketsEvent::ConnectionOpened) {
+// Function to specify the type of device to the server
+// Used by the server to identify the device
+void setClientType()
+{
+}
+
+// Execute when recieving a message
+void onMessageCallback(WebsocketsMessage message)
+{
+    Serial.print("Got Message: ");
+    Serial.println(message.data());
+
+    DynamicJsonDocument doc(1024);
+    DeserializationError err = deserializeJson(doc, message.data());
+
+    // Checar si hubo un error
+    if (err)
+    {
+        Serial.print(F("deserializeJson() failed with code "));
+        Serial.println(err.c_str());
+    }
+    else
+    {
+        // Imprimir el mensaje
+        serializeJson(doc, Serial);
+    }
+
+    const char *action = doc["action"];
+
+    Serial.print("\nAction: ");
+    Serial.println(action);
+}
+
+// Listen for events and print to debug status
+void onEventsCallback(WebsocketsEvent event, String data)
+{
+    if (event == WebsocketsEvent::ConnectionOpened)
+    {
         Serial.println("Connnection Opened");
-    } else if(event == WebsocketsEvent::ConnectionClosed) {
+    }
+    else if (event == WebsocketsEvent::ConnectionClosed)
+    {
         Serial.println("Connnection Closed");
-    } else if(event == WebsocketsEvent::GotPing) {
+    }
+    else if (event == WebsocketsEvent::GotPing)
+    {
         Serial.println("Got a Ping!");
-    } else if(event == WebsocketsEvent::GotPong) {
+    }
+    else if (event == WebsocketsEvent::GotPong)
+    {
         Serial.println("Got a Pong!");
     }
 }
 
-void ping(){
-  client.ping();
-}
-
-WebsocketsClient client;
-void setup() {
+void setup()
+{
     Serial.begin(115200);
+
     // Connect to wifi
-    Serial.println("Before wifi");
     WiFi.begin(ssid, password);
-    Serial.println("After wifi");
-    // Wait some time to connect to wifi
-    for(int i = 0; i < 10 && WiFi.status() != WL_CONNECTED; i++) {
-        Serial.print(".");
-        delay(1000);
+
+    // Wait until device iss connected
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        Serial.print("Wifi not connected. Status: ");
+        Serial.println(WiFi.status());
+        delay(500);
     }
+
+    Serial.println("Wifi has been connected");
 
     // run callback when messages are received
     client.onMessage(onMessageCallback);
-    
+
     // run callback when events are occuring
     client.onEvent(onEventsCallback);
-
-    // Before connecting, set the ssl fingerprint of the server
-//    client.setFingerprint(echo_org_ssl_fingerprint);
 
     // Connect to server
     client.connect(websockets_connection_string);
 
-    // Send a message
-    client.send("Hello Server");
+    setClientType();
 
     // Send a ping
     client.ping();
-
-    // Cada 120 segundos hacer un ping para que persista la conexión con el web socket.
-    pinPong.attach(120, ping);
 }
 
-void loop() {
+void loop()
+{
+    // Listen for events
     client.poll();
 }
