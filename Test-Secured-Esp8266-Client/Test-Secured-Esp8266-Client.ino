@@ -7,7 +7,6 @@
 const char *ssid = "";     // Enter SSID
 const char *password = ""; // Enter Password
 
-
 // Enter server adress
 const char *websockets_connection_string = "wss://15yzzg78gk.execute-api.us-east-1.amazonaws.com/development/";
 
@@ -33,8 +32,28 @@ void serializeTest()
 
 // Function to specify the type of device to the server
 // Used by the server to identify the device
+// The server matches the client's id with the specified type
 void setClientType()
 {
+    DynamicJsonDocument doc(1024);
+
+    doc["action"] = "deviceType";
+    doc["type"] = "RFID";
+
+    char output[200];
+    serializeJson(doc, output);
+    client.send(output);
+}
+
+void sendRFIDResponse(String lecture){
+    DynamicJsonDocument doc(1024);
+
+    doc["action"] = "RFIDResponse";
+    doc["data"] = lecture;
+
+    char output[200];
+    serializeJson(doc, output);
+    client.send(output);
 }
 
 // Execute when recieving a message
@@ -56,11 +75,12 @@ void onMessageCallback(WebsocketsMessage message)
     {
         // Imprimir el mensaje
         serializeJson(doc, Serial);
+        Serial.println();
     }
 
-    const char *action = doc["action"];
+    String action = doc["action"].as<String>();
 
-    Serial.print("\nAction: ");
+    Serial.print("Action: ");
     Serial.println(action);
 }
 
@@ -92,7 +112,7 @@ void setup()
     // Connect to wifi
     WiFi.begin(ssid, password);
 
-    // Wait until device iss connected
+    // Wait until device is connected
     while (WiFi.status() != WL_CONNECTED)
     {
         Serial.print("Wifi not connected. Status: ");
@@ -111,6 +131,7 @@ void setup()
     // Connect to server
     client.connect(websockets_connection_string);
 
+    // Set up with the server
     setClientType();
 
     // Send a ping
@@ -119,6 +140,13 @@ void setup()
 
 void loop()
 {
+    // RFID code:
+    // if (rfid.available())
+    // read the tag ID
+    // tagID = readTagID()
+    // send the tag ID to the server -> sendRFIDResponse(tagID)
+    // Receive if the tag is valid or not
+
     // Listen for events
     client.poll();
 }
