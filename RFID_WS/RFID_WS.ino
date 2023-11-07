@@ -9,12 +9,14 @@ can be implemented using data found in the database.
 
 */
 
+#include "config.h"
+#include <Servo.h>
+#include "Websockets.h"
 #include <ArduinoWebsockets.h>
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
 #include <SPI.h>
 #include <MFRC522.h>
-#include "Servo.h"
 
 // Define pins
 #define RST_PIN D3
@@ -31,47 +33,9 @@ const int openTime = 5000; // Close servo after the time has passed.
 const int openAngle = -180;
 const int closeAngle = 180;
 
-const char *ssid = "";     // Enter SSID
-const char *password = ""; // Enter Password
-
-// Enter server adress
-const char *websockets_connection_string = "";
-
 using namespace websockets;
 
-WebsocketsClient client;
-
-// Function to specify the type of device to the server
-// Used by the server to identify the device
-// The server matches the client's id with the specified type
-void setClientType()
-{
-    DynamicJsonDocument doc(1024);
-
-    doc["action"] = "deviceType"; // Defines endpoint to call
-    doc["type"] = "RFID";         // Used to identify several devices with the same purpose
-    doc["name"] = "rfidzone1";    // Unique, used to identify devices of the same type.
-
-    char output[200];
-    serializeJson(doc, output);
-    client.send(output);
-}
-
-void sendRFIDResponse(String lecture)
-{
-    Serial.print("Detected lecture: ");
-    Serial.println(lecture);
-    
-    DynamicJsonDocument doc(1024);
-
-    doc["action"] = "recieveData";
-    doc["dataType"] = "RFID";
-    doc["data"] = lecture;
-
-    char output[200];
-    serializeJson(doc, output);
-    client.send(output);
-}
+Websockets wsClient;
 
 // Execute when recieving a message
 void onMessageCallback(WebsocketsMessage message)
@@ -126,31 +90,10 @@ void onMessageCallback(WebsocketsMessage message)
     }
 }
 
-// Listen for events and print to debug status
-void onEventsCallback(WebsocketsEvent event, String data)
-{
-    if (event == WebsocketsEvent::ConnectionOpened)
-    {
-        Serial.println("Connnection Opened");
-    }
-    else if (event == WebsocketsEvent::ConnectionClosed)
-    {
-        Serial.println("Connnection Closed");
-    }
-    else if (event == WebsocketsEvent::GotPing)
-    {
-        Serial.println("Got a Ping!");
-    }
-    else if (event == WebsocketsEvent::GotPong)
-    {
-        Serial.println("Got a Pong!");
-    }
-}
-
 void setup()
 {
-    Serial.begin(115200);
-    
+    Serial.begin(config::serialBaud);
+
     while (!Serial)
     {
     }
@@ -172,7 +115,7 @@ void setup()
     Serial.println("Sensor and actuator initialization done.");
 
     // Connect to wifi
-    WiFi.begin(ssid, password);
+    WiFi.begin(config::ssid, config::password);
 
     // Wait until device is connected
     while (WiFi.status() != WL_CONNECTED)
@@ -185,19 +128,11 @@ void setup()
     Serial.println("Wifi has been connected");
 
     // run callback when messages are received
-    client.onMessage(onMessageCallback);
-
-    // run callback when events are occuring
-    client.onEvent(onEventsCallback);
-
-    // Connect to server
-    client.connect(websockets_connection_string);
-
-    // Set up with the server
-    setClientType();
+    wsClient.onMessage(onMessageCallback);
+    wsClient.initialize("RFID", "rfidzone1");
 
     // Send a ping
-    client.ping();
+    wsClient.ping();
 
     Serial.println("Setup has been finished");
 }
@@ -206,7 +141,7 @@ void loop()
 {
 
     // Listen for events
-    client.poll();
+    wsClient.poll();
 
     // RFID code:
 
@@ -244,7 +179,8 @@ void loop()
     reading.toUpperCase();
 
     // Send lecture to server
-    sendRFIDResponse(reading);
+    wsClient.sendStringResponse(reading, "RFID");
+
     delay(5000); // Wait to avoid sending lots of requests.
 }
 
