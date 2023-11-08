@@ -4,8 +4,6 @@
 #include <ArduinoWebsockets.h>
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
-#include <SPI.h>
-#include <MFRC522.h>
 
 // Valores del LDR: 0-1023
 const int ldrPin = A0;     // Pin del LDR
