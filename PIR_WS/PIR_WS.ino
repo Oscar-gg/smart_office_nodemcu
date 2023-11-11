@@ -1,13 +1,13 @@
 #include "config.h"
 #include <Servo.h>
-#include "Websockets.h"
+#include <Websockets.h>
 #include <ArduinoWebsockets.h>
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
 
 using namespace websockets;
 
-Websockets wsClient;
+Websockets wsClient(config::websockets_connection_string);
 
 int Status = 5;  // Digital pin D1
 int sensor = 13; // Digital pin D7
@@ -101,7 +101,7 @@ void loop()
   long state = digitalRead(sensor);
   if (state == HIGH)
   {
-    wsClient.sendStringResponse("triggered", "movement");
+    wsClient.sendResponse("triggered", "movement");
     digitalWrite(Status, HIGH);
     Serial.println("Motion detected!");
     delay(5000);

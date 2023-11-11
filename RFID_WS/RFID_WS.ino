@@ -11,7 +11,7 @@ can be implemented using data found in the database.
 
 #include "config.h"
 #include <Servo.h>
-#include "Websockets.h"
+#include <Websockets.h>
 #include <ArduinoWebsockets.h>
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
@@ -35,7 +35,7 @@ const int closeAngle = 180;
 
 using namespace websockets;
 
-Websockets wsClient;
+Websockets wsClient(config::websockets_connection_string);
 
 // Execute when recieving a message
 void onMessageCallback(WebsocketsMessage message)
@@ -179,7 +179,7 @@ void loop()
     reading.toUpperCase();
 
     // Send lecture to server
-    wsClient.sendStringResponse(reading, "RFID");
+    wsClient.sendResponse(reading, "RFID");
 
     delay(5000); // Wait to avoid sending lots of requests.
 }

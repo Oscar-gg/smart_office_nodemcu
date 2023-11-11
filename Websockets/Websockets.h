@@ -1,7 +1,6 @@
 #ifndef WEBSOCKETS_H
 #define WEBSOCKETS_H
 
-#include "config.h"
 #include <ArduinoJson.h>
 #include <ArduinoWebsockets.h>
 #include <functional>
@@ -14,16 +13,19 @@ class Websockets
 {
 private:
     WebsocketsClient client;
+    String connectionString;
     void setClientType(String type, String name);
+    void sendResponse(DynamicJsonDocument doc, String dataType, String id);
 
 public:
-    Websockets();
+    Websockets(String connectionString);
     void initialize(String type, String name);
     void ping();
     void poll();
-    void sendStringResponse(String data, String dataType);
-    void sendIntResponse(int data, String dataType);
-    void sendFloatResponse(float data, String dataType);
+
+    void sendResponse(String data, String dataType, String id = "");
+    void sendResponse(float data, String dataType, String id = "");
+
     void onMessage(const MessageCallback callback);
     void onMessage(const PartialMessageCallback callback);
 };

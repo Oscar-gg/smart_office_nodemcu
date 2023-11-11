@@ -1,5 +1,5 @@
 #include "config.h"
-#include "Websockets.h"
+#include <Websockets.h>
 #include <Servo.h>
 #include <ArduinoWebsockets.h>
 #include <ESP8266WiFi.h>
@@ -15,7 +15,7 @@ int pos = 0;      // Posición del myservo
 int v;            // Lectura del LDR
 
 using namespace websockets;
-Websockets wsClient;
+Websockets wsClient(config::websockets_connection_string);
 
 // Execute when recieving a message
 void onMessageCallback(WebsocketsMessage message)
@@ -54,7 +54,7 @@ void onMessageCallback(WebsocketsMessage message)
     else if (action == "getLight")
     {
         String encendido = isLightOn();
-        wsClient.sendStringResponse(encendido, "light");
+        wsClient.sendResponse(encendido, "light");
     }
     else
     {

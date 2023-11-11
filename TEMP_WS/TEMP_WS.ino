@@ -1,6 +1,6 @@
 #include "DHT.h"
 #include "config.h"
-#include "Websockets.h"
+#include <Websockets.h>
 #include <Servo.h>
 #include <ArduinoWebsockets.h>
 #include <ESP8266WiFi.h>
@@ -23,7 +23,7 @@ float upperBound = 24.60;
 float lowerBound = 18.0;
 
 using namespace websockets;
-Websockets wsClient;
+Websockets wsClient(config::websockets_connection_string);
 
 // Execute when recieving a message
 void onMessageCallback(WebsocketsMessage message)
@@ -81,7 +81,7 @@ void onMessageCallback(WebsocketsMessage message)
   }
   else if (action == "getHumidity")
   {
-    wsClient.sendFloatResponse(getHumidity(), "humidity");
+    wsClient.sendResponse(getHumidity(), "humidity");
   }
   else
   {
@@ -233,6 +233,6 @@ void loop()
   if (millis() - lastTime > SEND_TIME_INTERVAL)
   {
     lastTime = millis();
-    wsClient.sendFloatResponse(getTemp(), "temperature");
+    wsClient.sendResponse(getTemp(), "temperature");
   }
 }

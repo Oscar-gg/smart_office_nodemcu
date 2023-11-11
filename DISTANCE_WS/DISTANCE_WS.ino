@@ -1,6 +1,6 @@
 #include "config.h"
 #include <Servo.h>
-#include "Websockets.h"
+#include <Websockets.h>
 #include <ArduinoWebsockets.h>
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
@@ -19,7 +19,7 @@ unsigned long ledStartTime; // Variable para rastrear el tiempo de inicio del LE
 
 using namespace websockets;
 
-Websockets wsClient;
+Websockets wsClient(config::websockets_connection_string);
 
 const long int CHECK_DISTANCE_INTERVAL = 1000; // ms
 unsigned long int lastTime = 0;
@@ -67,7 +67,8 @@ void onMessageCallback(WebsocketsMessage message)
     {
 
         float ledElapsedTimeHours = (float)workTime / 3600000.0;
-        wsClient.sendFloatResponse(ledElapsedTimeHours, "workTime");
+        wsClient.sendResponse(ledElapsedTimeHours, "light", "1");
+        // wsClient.sendFloatResponse(ledElapsedTimeHours, "workTime");
         workTime = 0;
     }
     else
@@ -108,12 +109,20 @@ void setup()
 
     // run callback when messages are received
     wsClient.onMessage(onMessageCallback);
-    wsClient.initialize("UltraSonic", "ultrasoniczone1");
+    wsClient.initialize("ultrasonic", "ultrasoniczone1");
 
     // Send a ping
     wsClient.ping();
 
     Serial.println("Setup has been finished");
+
+    delay(2000);
+    wsClient.sendResponse(10.12, "temperature", "1");
+    delay(2000);
+    wsClient.sendResponse(1, "workTime", "a");
+    delay(2000);
+    wsClient.sendResponse("Insano", "light");
+    Serial.println("Tests terminados");
 }
 
 float getDistance()

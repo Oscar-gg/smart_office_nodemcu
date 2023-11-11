@@ -1,13 +1,14 @@
 #include "Websockets.h"
 
-Websockets::Websockets()
+Websockets::Websockets(String connectionString)
 {
+    this->connectionString = connectionString;
 }
 
 void Websockets::initialize(String type, String name)
 {
     // Connect to server
-    client.connect(config::websockets_connection_string);
+    client.connect(connectionString);
     client.onEvent(onEventsCallback);
     setClientType(type, name);
 }
@@ -39,56 +40,45 @@ void Websockets::poll()
     client.poll();
 }
 
-void Websockets::sendStringResponse(String data, String dataType)
-{
-    Serial.print("Sending respnse:");
-    Serial.println(data);
-    DynamicJsonDocument doc(1024);
-
-    doc["action"] = "recieveData";
-    doc["dataType"] = dataType;
-    doc["data"] = data;
-
-    char output[200];
-    serializeJson(doc, output);
-    client.send(output);
-}
-
-void Websockets::sendIntResponse(int data, String dataType)
-{
-    Serial.print("Sending respnse:");
-    Serial.println(data);
-    DynamicJsonDocument doc(1024);
-
-    doc["action"] = "recieveData";
-    doc["dataType"] = dataType;
-    doc["data"] = data;
-
-    char output[200];
-    serializeJson(doc, output);
-    client.send(output);
-}
-
-void Websockets::sendFloatResponse(float data, String dataType)
-{
-    Serial.print("Sending respnse:");
-    Serial.println(data);
-    DynamicJsonDocument doc(1024);
-
-    doc["action"] = "recieveData";
-    doc["dataType"] = dataType;
-    doc["data"] = data;
-
-    char output[200];
-    serializeJson(doc, output);
-    client.send(output);
-}
-
 void Websockets::onMessage(const MessageCallback callback)
 {
     this->client.onMessage(callback);
 }
+
 void Websockets::onMessage(const PartialMessageCallback callback)
 {
     this->client.onMessage(callback);
+}
+
+void Websockets::sendResponse(DynamicJsonDocument doc, String dataType, String id)
+{
+    doc["action"] = "recieveData";
+    doc["dataType"] = dataType;
+
+    if (id != "")
+    {
+        doc["id"] = id;
+    }
+
+    Serial.println("Sending to server: ");
+    serializeJson(doc, Serial);
+
+    char output[300];
+    serializeJson(doc, output);
+    client.send(output);
+}
+
+void Websockets::sendResponse(float data, String dataType, String id)
+{
+    DynamicJsonDocument doc(1024);
+    doc["data"] = data;
+
+    sendResponse(doc, dataType, id);
+}
+void Websockets::sendResponse(String data, String dataType, String id)
+{
+    DynamicJsonDocument doc(1024);
+    doc["data"] = data;
+
+    sendResponse(doc, dataType, id);
 }
