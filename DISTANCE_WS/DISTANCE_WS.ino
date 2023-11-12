@@ -65,9 +65,10 @@ void onMessageCallback(WebsocketsMessage message)
     }
     else if (action == "endWorkTime")
     {
+        String sessionId = doc["id"].as<String>() | "";
 
         float ledElapsedTimeHours = (float)workTime / 3600000.0;
-        wsClient.sendResponse(ledElapsedTimeHours, "light", "1");
+        wsClient.sendResponse(ledElapsedTimeHours, "light", sessionId);
         // wsClient.sendFloatResponse(ledElapsedTimeHours, "workTime");
         workTime = 0;
     }
