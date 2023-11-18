@@ -12,7 +12,6 @@ can be implemented using data found in the database.
 #include "config.h"
 #include <Servo.h>
 #include <Websockets.h>
-#include <ArduinoWebsockets.h>
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
 #include <SPI.h>
@@ -33,7 +32,8 @@ const int openTime = 5000; // Close servo after the time has passed.
 const int openAngle = -180;
 const int closeAngle = 180;
 
-using namespace websockets;
+const int DELAY_RFID_LECTURE = 5000;
+long long int lastTime = 0;
 
 Websockets wsClient(config::websockets_connection_string);
 
@@ -156,6 +156,14 @@ void loop()
         return;
     }
 
+    // If a lecture has been detected recently, skip detection again.
+    if (millis() - lastTime < DELAY_RFID_LECTURE)
+    {
+        return;
+    }
+
+    lastTime = millis();
+
     Serial.println("RFID readed card successfuly");
 
     String reading = "";
@@ -180,8 +188,6 @@ void loop()
 
     // Send lecture to server
     wsClient.sendResponse(reading, "RFID");
-
-    delay(5000); // Wait to avoid sending lots of requests.
 }
 
 // Open servo, considering the specified variables

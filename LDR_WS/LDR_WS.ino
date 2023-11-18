@@ -51,10 +51,10 @@ void onMessageCallback(WebsocketsMessage message)
         Serial.println("Error: no action was detected.");
         Serial.println("Aborted action");
     }
-    else if (action == "getLight")
+    else if (action == "getSessionLight")
     {
         String encendido = isLightOn();
-        String sessionId = doc["id"].as<String>() | "";
+        String sessionId = doc["id"].as<String>();
 
         wsClient.sendResponse(encendido, "light", sessionId);
     }
