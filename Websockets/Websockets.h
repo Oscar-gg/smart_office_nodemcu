@@ -14,11 +14,17 @@ class Websockets
 private:
     WebsocketsClient client;
     String connectionString;
-    void setClientType(String type, String name);
+    bool debug;
+    const long int CHECK_CONNECTION_INTERVAL = 10000; // ms
+    unsigned long int lastTime = 0;
+    String type;
+    String name;
+
+    void setClientType();
     void sendResponse(DynamicJsonDocument doc, String dataType, String id);
 
 public:
-    Websockets(String connectionString);
+    Websockets(String connectionString, bool debug = false);
     void initialize(String type, String name);
     void ping();
     void poll();

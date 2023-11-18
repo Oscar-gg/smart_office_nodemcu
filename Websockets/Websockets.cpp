@@ -1,22 +1,25 @@
 #include "Websockets.h"
 
-Websockets::Websockets(String connectionString)
+Websockets::Websockets(String connectionString, bool debug)
 {
     this->connectionString = connectionString;
+    this->debug = debug;
 }
 
 void Websockets::initialize(String type, String name)
 {
+    this->type = type;
+    this->name = name;
     // Connect to server
     client.connect(connectionString);
     client.onEvent(onEventsCallback);
-    setClientType(type, name);
+    setClientType();
 }
 
 // Function to specify the type of device to the server
 // Used by the server to identify the device
 // The server matches the client's id with the specified type
-void Websockets::setClientType(String type, String name)
+void Websockets::setClientType()
 {
     DynamicJsonDocument doc(1024);
 
@@ -37,6 +40,28 @@ void Websockets::ping()
 }
 void Websockets::poll()
 {
+    if (millis() - lastTime > CHECK_CONNECTION_INTERVAL)
+    {
+        lastTime = millis();
+        bool stillConnected = client.available();
+        if (debug)
+        {
+            if (stillConnected)
+            {
+                Serial.println("Client.available() is true");
+            }
+            else
+            {
+                Serial.println("Client.available() is false");
+            }
+        }
+        if (!stillConnected)
+        {
+            client.connect(connectionString);
+            setClientType();
+        }
+    }
+
     client.poll();
 }
 
