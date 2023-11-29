@@ -25,6 +25,7 @@ const long int CHECK_DISTANCE_INTERVAL = 1000; // ms
 unsigned long int lastTime = 0;
 
 long int workTime = 0; // ms
+const int distanceWorkingTime = 4;
 
 // Execute when recieving a message
 void onMessageCallback(WebsocketsMessage message)
@@ -65,7 +66,7 @@ void onMessageCallback(WebsocketsMessage message)
     }
     else if (action == "endWorkTime")
     {
-        String sessionId = doc["id"].as<String>() | "";
+        String sessionId = doc["id"].as<String>();
 
         float ledElapsedTimeHours = (float)workTime / 3600000.0;
         wsClient.sendResponse(ledElapsedTimeHours, "light", sessionId);
@@ -152,7 +153,7 @@ void loop()
         Serial.print("Distancia (cm): ");
         Serial.println(distanceCm); // Imprimir la distancia en centímetros en el puerto serie
 
-        if (distanceCm <= 35)
+        if (distanceCm <= distanceWorkingTime)
         {
             workTime += CHECK_DISTANCE_INTERVAL; // Sumar 1 segundo
             if (!isLedOn)

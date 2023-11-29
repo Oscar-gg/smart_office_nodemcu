@@ -53,10 +53,10 @@ void onMessageCallback(WebsocketsMessage message)
     }
     else if (action == "getSessionLight")
     {
-        String encendido = isLightOn();
+        String encendidoResult = isLightOn();
         String sessionId = doc["id"].as<String>();
 
-        wsClient.sendResponse(encendido, "light", sessionId);
+        wsClient.sendResponse(encendidoResult, "light", sessionId);
     }
     else
     {

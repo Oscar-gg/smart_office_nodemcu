@@ -9,8 +9,12 @@ using namespace websockets;
 
 Websockets wsClient(config::websockets_connection_string);
 
-int Status = 5;  // Digital pin D1
-int sensor = 13; // Digital pin D7
+const int pirPin = D1; // Pin al que está conectado el sensor PIR
+const int ledPin = D2; // Pin al que está conectado el LED para indicar movimiento
+
+// Dont send data if less time has passed
+const long int SEND_TIME_INTERVAL = 30000;
+unsigned long int lastAlarmSent = 0;
 
 // Execute when recieving a message
 void onMessageCallback(WebsocketsMessage message)
@@ -65,8 +69,8 @@ void setup()
 
   Serial.println("Serial communication initialized.");
 
-  pinMode(sensor, INPUT);  // declare sensor as input
-  pinMode(Status, OUTPUT); // declare LED as output
+  pinMode(pirPin, INPUT);  // declare sensor as input
+  pinMode(ledPin, OUTPUT); // declare LED as output
 
   Serial.println("PIR and LED initialized.");
 
@@ -98,17 +102,24 @@ void loop()
   // Listen for events
   wsClient.poll();
 
-  long state = digitalRead(sensor);
+  long state = digitalRead(pirPin);
   if (state == HIGH)
   {
-    wsClient.sendResponse("triggered", "movement");
-    digitalWrite(Status, HIGH);
+    digitalWrite(ledPin, HIGH);
     Serial.println("Motion detected!");
-    delay(5000);
+    delay(1000);
+
+    // Update status if more than 30s have passed
+    if (millis() - lastAlarmSent < SEND_TIME_INTERVAL)
+    {
+      return;
+    }
+    wsClient.sendResponse("triggered", "movement");
+    lastAlarmSent = millis();
   }
   else
   {
-    digitalWrite(Status, LOW);
+    digitalWrite(ledPin, LOW);
     Serial.println("Motion absent!");
     delay(1000);
   }
