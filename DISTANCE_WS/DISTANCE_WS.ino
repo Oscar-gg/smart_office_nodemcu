@@ -69,8 +69,8 @@ void onMessageCallback(WebsocketsMessage message)
         String sessionId = doc["id"].as<String>();
 
         float ledElapsedTimeHours = (float)workTime / 3600000.0;
-        wsClient.sendResponse(ledElapsedTimeHours, "light", sessionId);
-        // wsClient.sendFloatResponse(ledElapsedTimeHours, "workTime");
+        wsClient.sendResponse(ledElapsedTimeHours, "workTime", sessionId);
+
         workTime = 0;
     }
     else
@@ -117,14 +117,6 @@ void setup()
     wsClient.ping();
 
     Serial.println("Setup has been finished");
-
-    delay(2000);
-    wsClient.sendResponse(10.12, "temperature", "1");
-    delay(2000);
-    wsClient.sendResponse(1, "workTime", "a");
-    delay(2000);
-    wsClient.sendResponse("Insano", "light");
-    Serial.println("Tests terminados");
 }
 
 float getDistance()
